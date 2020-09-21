@@ -16,6 +16,8 @@ public class Parser {
         }
 
         StringBuffer curVal = new StringBuffer();
+        boolean inComment = false;
+        boolean firstComment = false;
         boolean inQuotes = false;
         boolean startCollectChar = false;
         boolean doubleQuotesInColumn = false;
@@ -23,55 +25,97 @@ public class Parser {
         char[] chars = cvsLine.toCharArray();
 
         for (char ch : chars) {
+if (!inComment) {
+    if (inQuotes) {
+        startCollectChar = true;
+        if (ch == quote) {
+            inQuotes = false;
+            doubleQuotesInColumn = false;
+        }else if(firstComment)
+        {
+            if(ch=='/')
+                inComment=true;
+            else
+            {
+                firstComment=false;
+                curVal.append('*'+ch);
+            }
+        }
+        else if(ch=='*')
+        {
+            firstComment=true;
+        }
+        else {
 
-            if (inQuotes) {
-                startCollectChar = true;
-                if (ch == quote) {
-                    inQuotes = false;
-                    doubleQuotesInColumn = false;
-                }
-                else
-                {
-
-                    if (ch == '\"') {
-                        if (!doubleQuotesInColumn) {
-                            curVal.append(ch);
-                            doubleQuotesInColumn = true;
-                        }
-                    } else {
-                        curVal.append(ch);
-                    }
-
+            if (ch == '\"') {
+                if (!doubleQuotesInColumn) {
+                    curVal.append(ch);
+                    doubleQuotesInColumn = true;
                 }
             } else {
-                if (ch == quote) {
-
-                    inQuotes = true;
-
-                    if (chars[0] != '"' && quote == '\"') {
-                        curVal.append('"');
-                    }
-
-                    if (startCollectChar) {
-                        curVal.append('"');
-                    }
-
-                } else if (ch == separators) {
-
-                    result.add(curVal.toString());
-
-                    curVal = new StringBuffer();
-                    startCollectChar = false;
-
-                }
-                else if (ch == '\n') {
-
-                    break;
-                } else {
-                    curVal.append(ch);
-                }
+                curVal.append(ch);
             }
 
+        }
+    } else {
+        if (ch == quote) {
+
+            inQuotes = true;
+
+            if (chars[0] != '"' && quote == '\"') {
+                curVal.append('"');
+            }
+
+            if (startCollectChar) {
+                curVal.append('"');
+            }
+
+        } else if (ch == separators) {
+
+            result.add(curVal.toString());
+
+            curVal = new StringBuffer();
+            startCollectChar = false;
+
+        } else if (ch == '\n') {
+
+            break;
+        }
+        else if(firstComment)
+        {
+            if(ch=='/')
+                inComment=true;
+            else
+            {
+                firstComment=false;
+                curVal.append('*'+ch);
+            }
+        }
+        else if(ch=='*')
+        {firstComment=true; }
+        else
+        {
+            curVal.append(ch);
+        }
+    }
+}
+else
+    {
+
+        if(firstComment)
+        {
+        if(ch=='/')
+        {
+            inComment=false;
+            firstComment=false;
+        }
+        else
+            firstComment=false;
+    }
+        if(ch=='*')
+            firstComment=true;
+
+    }
         }
 
         result.add(curVal.toString());
